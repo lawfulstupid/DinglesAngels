@@ -162,6 +162,8 @@ instance Date ThyrDate where
 newDate :: Int -> Int -> Int -> DayOfWeek -> ThyrDate
 newDate e y w d = ThyrDate (ThyrYear e y) w d
 
+new2022 = newDate 20 22
+
 dateFromYear :: ThyrYear -> ThyrDate
 dateFromYear y = ThyrDate y 1 $ toEnum 0
 

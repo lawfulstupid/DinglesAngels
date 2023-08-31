@@ -28,7 +28,7 @@ daysPerMonth = alignmentPeriod (orbitalPeriod arukma) (orbitalPeriod losit)
 -- CELESTIAL BODY CONSTANTS
 data Body = Body
    { orbitalPeriod :: Double
-   , originAngle :: Double -- syndodic
+   , originAngle :: Double -- synodic
    } deriving (Show)
 
 sun = Body 340.16433 11.2854 -- sidereal, degrees forward from spring/summer boundary

@@ -93,7 +93,6 @@ data ThyrDate = ThyrDate
 data TemporalUnit = Day | Week | Month | Year | Epoch
 
 
-
 instance Enum ThyrYear where
    toEnum = seqToThyr
    fromEnum = thyrToSeq
@@ -246,7 +245,10 @@ moonPic h a = let
       h' = fromIntegral h
       in sqrt (x' ^2 + y' ^2) <= h'
 
-interlunarEclipse :: ThyrDate -> Bool
+
+type Event = ThyrDate -> Bool
+
+interlunarEclipse :: Event
 interlunarEclipse today = let
    arukmaAngle = moonAngle arukma today
    lositAngle = moonAngle losit today
@@ -257,19 +259,19 @@ interlunarEclipse today = let
    tomorrowDiff = fixAngle180 (arukmaAngleTmrw - lositAngleTmrw)
    in todayDiff < 0 && tomorrowDiff > 0
 
-solarEclipse :: Body -> ThyrDate -> Bool
+solarEclipse :: Body -> Event
 solarEclipse moon today = let
    angle = fixAngle180 $ moonAngle moon today
    angle' = fixAngle180 $ moonAngle moon $ offset 1 Day today
    in angle < 0 && angle' > 0
 
-fullMoon :: Body -> ThyrDate -> Bool
+fullMoon :: Body -> Event
 fullMoon moon today = let
    angle = fixAngle180 $ moonAngle moon today
    angle' = fixAngle180 $ moonAngle moon $ offset 1 Day today
    in angle > 0 && angle' < 0
 
-nextEvent :: (ThyrDate -> Bool) -> ThyrDate -> ThyrDate
+nextEvent :: Event -> ThyrDate -> ThyrDate
 nextEvent isEvent today = if isEvent today then today else nextEvent isEvent (offset 1 Day today)
 
 nextInterlunarEclipse = nextEvent interlunarEclipse

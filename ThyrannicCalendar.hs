@@ -50,22 +50,19 @@ suffix n = case n `mod` 10 of
    3 -> "rd"
    _ -> "th"
 
-new :: Int -> Int -> ThyrYear
-new = ThyrYear
-
-
-
 weeksPerYear :: ThyrYear -> Int
 weeksPerYear d = 56 + if yearOfEpoch d == 200 then 13 else if yearOfEpoch d `mod` 20 == 0 then 14 else 0
 
 
+-- Conversions
+
 thyrToSeq :: ThyrYear -> SeqYear
-thyrToSeq d = 200*(epoch d) + (yearOfEpoch d) - 2000
+thyrToSeq d = 200*(epoch d - 1) + (yearOfEpoch d)
 
 seqToThyr :: SeqYear -> ThyrYear
 seqToThyr y = let
-   (d,m) = (y+1999) `divMod` 200
-   in new d (m+1)
+   (e,y') = (y-1) `divMod` 200
+   in ThyrYear (e + 1) (y' + 1)
 
 seqToGreg :: SeqYear -> GregYear
 seqToGreg d = if d > 0 then CE d else BCE (1-d)
@@ -278,23 +275,44 @@ nextInterlunarEclipse = nextEvent interlunarEclipse
 nextSolarEclipse = nextEvent (\date -> solarEclipse arukma date || solarEclipse losit date)
 nextFullMoon = nextEvent (\date -> fullMoon arukma date || fullMoon losit date)
 
-unitTests :: IO ()
-unitTests = do
-   print (fromEnum (newDate 1 1 1 Dolgos) == 0)
-   print (fromEnum (newDate 1 1 1 Naugos) == 1)
-   print (fromEnum (newDate 1 1 1 Brogos) == 2)
-   print (fromEnum (newDate 1 1 1 Thyrgos) == 3)
-   print (fromEnum (newDate 1 1 1 Draxigos) == 4)
-   print (fromEnum (newDate 1 1 1 Telugos) == 5)
-   print (fromEnum (newDate 1 1 2 Dolgos) == 6)
-   testOneDiff (newDate 1 1 56 Telugos) (newDate 1 2 1 Dolgos)
-   testOneDiff (newDate 1 2 56 Telugos) (newDate 1 3 1 Dolgos)
-   testOneDiff (newDate 1 20 70 Telugos) (newDate 1 21 1 Dolgos)
-   testOneDiff (newDate 1 21 56 Telugos) (newDate 1 22 1 Dolgos)
-   testOneDiff (newDate 1 100 70 Telugos) (newDate 1 101 1 Dolgos)
-   testOneDiff (newDate 1 200 69 Telugos) (newDate 2 1 1 Dolgos)
-   testOneDiff (newDate 20 22 16 Brogos) (newDate 20 22 16 Thyrgos)
-   print (toEnum 1299878 == ThyrDate (ThyrYear 20 22) 16 Brogos)
+unitTests :: [Bool]
+unitTests =
+   [ fromEnum (newDate 1 1 1 Dolgos) == 0
+   , fromEnum (newDate 1 1 1 Naugos) == 1
+   , fromEnum (newDate 1 1 1 Brogos) == 2
+   , fromEnum (newDate 1 1 1 Thyrgos) == 3
+   , fromEnum (newDate 1 1 1 Draxigos) == 4
+   , fromEnum (newDate 1 1 1 Telugos) == 5
+   , fromEnum (newDate 1 1 2 Dolgos) == 6
+   , testOneDiff (newDate 1 1 56 Telugos) (newDate 1 2 1 Dolgos)
+   , testOneDiff (newDate 1 2 56 Telugos) (newDate 1 3 1 Dolgos)
+   , testOneDiff (newDate 1 20 70 Telugos) (newDate 1 21 1 Dolgos)
+   , testOneDiff (newDate 1 21 56 Telugos) (newDate 1 22 1 Dolgos)
+   , testOneDiff (newDate 1 100 70 Telugos) (newDate 1 101 1 Dolgos)
+   , testOneDiff (newDate 1 200 69 Telugos) (newDate 2 1 1 Dolgos)
+   , testOneDiff (newDate 20 22 16 Brogos) (newDate 20 22 16 Thyrgos)
+   , toEnum 1299878 == ThyrDate (ThyrYear 20 22) 16 Brogos
+   , seqToThyr 1 == ThyrYear 1 1
+   , seqToThyr 0 == ThyrYear 0 200
+   , seqToThyr (-1) == ThyrYear 0 199
+   , seqToThyr 199 == ThyrYear 1 199
+   , seqToThyr 200 == ThyrYear 1 200
+   , seqToThyr 201 == ThyrYear 2 1
+   , (thyrToSeq . seqToThyr) 0 == 0
+   , (thyrToSeq . seqToThyr) 1 == 1
+   , (thyrToSeq . seqToThyr) (-1) == -1
+   , (thyrToSeq . seqToThyr) 199 == 199
+   , (thyrToSeq . seqToThyr) 200 == 200
+   , (thyrToSeq . seqToThyr) 201 == 201
+   , (thyrToSeq . seqToThyr) (-199) == -199
+   , (thyrToSeq . seqToThyr) (-200) == -200
+   , (thyrToSeq . seqToThyr) (-201) == -201
+   ]
 
-testOneDiff :: ThyrDate -> ThyrDate -> IO ()
-testOneDiff a b = print (fromEnum a + 1 == fromEnum b)
+testOneDiff :: ThyrDate -> ThyrDate -> Bool
+testOneDiff a b = fromEnum a + 1 == fromEnum b
+
+runUnitTests :: IO ()
+runUnitTests = do
+   putStr "Failed tests: "
+   print $ map fst $ filter (not . snd) $ zip [1..] unitTests
